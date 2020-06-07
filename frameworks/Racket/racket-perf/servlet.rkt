@@ -260,7 +260,7 @@
   (define-libc fork (_fun -> _int))
   (define-libc wait (_fun -> _int))
 
-  (let loop ([n (* 2 (processor-count))])
+  (let loop ([n (* 3 (processor-count))])
     (define pid (fork))
     (cond
       [(zero? pid)
