@@ -217,9 +217,12 @@
        (map world->hash worlds)))]))
 
 (module+ main
-  (require racket/async-channel
+  (require ffi/unsafe
+           ffi/unsafe/define
+           racket/async-channel
            racket/cmdline
            racket/format
+           racket/future
            web-server/http/response
            web-server/safety-limits
            web-server/web-server)
@@ -249,11 +252,24 @@
   (when (exn:fail? ready-or-exn)
     (raise ready-or-exn))
 
-  (call-with-output-file (build-path (~a port ".ready"))
-    (lambda (out)
-      (displayln "ready" out)))
+  (define-ffi-definer define-libc
+    (case (system-type 'os)
+      [(macosx) (ffi-lib "libc")]
+      [else (ffi-lib "libc.so.6")]))
 
-  (with-handlers ([exn:break?
-                   (lambda (_e)
-                     (stop))])
-    (sync/enable-break never-evt)))
+  (define-libc fork (_fun -> _int))
+  (define-libc wait (_fun -> _int))
+
+  (let loop ([n (* 2 (processor-count))])
+    (define pid (fork))
+    (cond
+      [(zero? pid)
+       (with-handlers ([exn:break? void])
+         (sync/enable-break never-evt))]
+
+      [(zero? n)
+       (wait)
+       (stop)]
+
+      [else
+       (loop (sub1 n))])))
