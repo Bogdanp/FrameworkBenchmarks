@@ -31,7 +31,7 @@ RUN apt-get update -q \
 
 FROM racket AS builder
 
-RUN raco pkg install --auto 'git://github.com/Bogdanp/web-server.git?path=web-server-lib#ef5be945440614c4570c7ee1919b272b24cf168a'
+RUN raco pkg install --auto 'git://github.com/Bogdanp/web-server.git?path=web-server-lib#bdef177be396bbb988e777907a55202a0edc969b'
 RUN raco pkg install --auto compiler-lib db-lib threading-lib
 
 WORKDIR /racket
