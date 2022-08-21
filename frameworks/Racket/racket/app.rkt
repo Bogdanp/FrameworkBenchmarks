@@ -94,12 +94,15 @@
     (world id n)))
 
 (define (worlds-ref/random n)
+  (define sema (make-semaphore 3))
   (define promises
     (let ([group (make-thread-group)])
       (for/list ([id (in-list (random-world-ids n))])
         (delay/thread
          #:group group
-         (worlds-ref id)))))
+         (call-with-semaphore sema
+           (lambda ()
+             (worlds-ref id)))))))
   (map force promises))
 
 (define (worlds-update! rs)
