@@ -5,6 +5,7 @@
          racket/async-channel
          racket/fasl
          racket/port
+         racket/promise
          racket/serialize
          redis
          threading
@@ -93,9 +94,13 @@
     (world id n)))
 
 (define (worlds-ref/random n)
-  (for*/list ([id (in-list (random-world-ids n))]
-              [(id n) (in-query *db* select-one-world id)])
-    (world id n)))
+  (define promises
+    (let ([group (make-thread-group)])
+      (for/list ([id (in-list (random-world-ids n))])
+        (delay/thread
+         #:group group
+         (worlds-ref id)))))
+  (map force promises))
 
 (define (worlds-update! rs)
   (for ([r (in-list rs)])
